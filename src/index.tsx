@@ -415,9 +415,9 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) => {
       {selectedProcess && Search}
       {selectedProcess && Stats}
 
-      {/* If there are fewer than 10 results */}
-      {selectedProcess && numberOfMatches > 0 && numberOfMatches < 10 && Change}
-      {selectedProcess && numberOfMatches > 0 && numberOfMatches < 10 && Results}
+      {/* If there are fewer than 20 results */}
+      {selectedProcess && numberOfMatches > 0 && numberOfMatches < 20 && Change}
+      {selectedProcess && numberOfMatches > 0 && numberOfMatches < 20 && Results}
 
 
       {/* If there is no selected process */}
