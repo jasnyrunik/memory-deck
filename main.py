@@ -12,6 +12,46 @@ from ctypes import *
 # initiate list that will store values we want to freeze
 freeze_subprocess_list = []
 
+# Blacklist some processes
+blacklist = [
+	"bash",
+	"COMMAND",
+	"ControllerTools",
+	"CrashHandler",
+	"dbus-daemon",
+	"dconf-service",
+	"gamemoded",
+	"gamescope",
+	"gamescope-session",
+	"ibus",
+	"ibus-daemon",
+	"kwalletd5",
+	"mangoapp",
+	"pipewire",
+	"PluginLoader",
+	"power-button-handler",
+	"pressure-vessel",
+	"proton ",
+	"ps ",
+	"reaper ",
+	"sd-pam",
+	"sdgyrodsu",
+	"socat",
+	"sshd",
+	"steam ",
+	"steamos-devkit-service",
+	"steamwebhelper",
+	"system32",
+	"systemd",
+	"wineserver",
+	"wireplumber",
+	"xbindkeys",
+	"xdg-desktop-portal",
+	"xdg-document-portal",
+	"xdg-permission-store",
+	"Xwayland",
+]
+
 class Plugin:
     search_type = "auto"
 
@@ -19,28 +59,20 @@ class Plugin:
     async def get_processes(self):
         logging.info("Getting processes")
 
+        full_path_dict = await self.__get_processes(True)
+        titles_dict = await self.__get_processes(False)
+
         process_list = []
 
-        # Get a list of processes using ps for the current user, we need the PID and the untruncated process name.
-        ps = subprocess.Popen(
-            ["ps", "-u", "1000", "-o", "pid,command"], stdout=subprocess.PIPE)
-
-        output = subprocess.check_output(
-            ('grep', '-v', 'grep'), stdin=ps.stdout)
-        ps.wait()
-
-        # Blacklist some processes
-        blacklist = ["ps ", "systemd", "reaper ", "pressure-vessel", "proton ", "power-button-handler", "ibus", "xbindkeys", "COMMAND", "wineserver", "system32", "socat", "sd-pam", "gamemoded", 
-        "sdgyrodsu", "dbus-daemon", "kwalletd5", "gamescope-session", "gamescope", "PluginLoader", "pipewire", "Xwayland", "wireplumber", "ibus-daemon", "sshd", "mangoapp", "steamwebhelper", "steam ", 
-        "xdg-desktop-portal", "xdg-document-portal", "xdg-permission-store", "bash", "steamos-devkit-service", "dconf-service", "CrashHandler", "ControllerTools"]
-
         # Parse output
-        for line in output.splitlines():
-            pid, name = line.decode().split(None, 1)
+        for pid in full_path_dict:
+            name = full_path_dict[pid]
+            title = titles_dict[pid]
 
             # If the name doesn't contain any string from the blacklist, append it
             if not any(x in name for x in blacklist):
-                process_list.append({"pid": pid, "name": name})
+                process_list.append({"pid": pid, "name": name, "title": title})
+
 
         # Remove blacklisted processes#
         for process in process_list:
@@ -50,6 +82,30 @@ class Plugin:
                     process_list.remove(process)
 
         return process_list
+    
+    async def __get_processes(self, show_full_path):
+        # Get a list of processes using ps for the current user, we need the PID and the untruncated process name.
+        command = []
+        if show_full_path:
+            command = ["ps", "-u", "1000", "-o", "pid,command"]
+        else:
+            command = ["ps", "-u", "1000", "co", "pid,command"]
+
+        ps = subprocess.Popen(
+            command, stdout=subprocess.PIPE)
+
+        output = subprocess.check_output(
+            ('grep', '-v', 'grep'), stdin=ps.stdout)
+        ps.wait()
+
+        process_dict = {}
+        for line in output.splitlines():
+            pid, name = line.decode().split(None, 1)
+            process_dict[pid] = name
+
+        return process_dict
+
+
 
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self):

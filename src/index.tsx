@@ -22,6 +22,7 @@ import { playSound } from "./util/util";
 //Process type with Name and Process ID properties
 interface Process {
   name: string;
+  title: string;
   pid: number;
 }
 
@@ -239,8 +240,11 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) => {
               onClick={() => setSelectedProcess(process)}
               layout="below"
             >
-              {process?.name}
+              {process?.title}
             </ButtonItem>
+            <div className={gamepadDialogClasses.FieldLabel} style={{ "maxWidth": "75%", "width": "100%", "wordBreak": "break-all", "textAlign": "end", "font-size" : "25%" }}>
+              {process?.name}
+            </div>
           </PanelSectionRow>
         ))}
       </React.Fragment>
